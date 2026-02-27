@@ -1,0 +1,104 @@
+--[[ 
+    NOKS DOUBLE SPEED - EXCLUSIVE EDITION
+    - Cliquer sur un bouton désactive l'autre automatiquement.
+    - Utilise la Velocity pour le bypass anti-cheat.
+    - Freinage fluide inclus.
+]]
+
+local player = game.Players.LocalPlayer
+local runService = game:GetService("RunService")
+local sg = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
+sg.Name = "NoksExclusiveSpeed"
+sg.ResetOnSpawn = false
+
+-- Variables
+local currentSpeed = 0 
+
+-- --- INTERFACE ---
+local mainFrame = Instance.new("Frame", sg)
+mainFrame.Size = UDim2.new(0, 150, 0, 140)
+mainFrame.Position = UDim2.new(0.5, -75, 0.2, 0)
+mainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+mainFrame.Active = true
+mainFrame.Draggable = true
+Instance.new("UICorner", mainFrame).CornerRadius = UDim.new(0, 10)
+
+local title = Instance.new("TextLabel", mainFrame)
+title.Size = UDim2.new(1, 0, 0, 30)
+title.Text = "BRAINROT SPEED"
+title.TextColor3 = Color3.new(1, 1, 1)
+title.BackgroundTransparency = 1
+title.Font = Enum.Font.SourceSansBold
+
+-- Couleurs de base
+local color50 = Color3.fromRGB(0, 150, 255)
+local color30 = Color3.fromRGB(0, 180, 100)
+local colorActive = Color3.fromRGB(200, 50, 50) -- Rouge quand actif
+
+local function createBtn(name, text, pos, color)
+    local btn = Instance.new("TextButton", mainFrame)
+    btn.Name = name
+    btn.Size = UDim2.new(0, 130, 0, 35)
+    btn.Position = pos
+    btn.BackgroundColor3 = color
+    btn.Text = text
+    btn.TextColor3 = Color3.new(1, 1, 1)
+    btn.Font = Enum.Font.SourceSansBold
+    btn.TextSize = 14
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
+    return btn
+end
+
+local btn50 = createBtn("Btn50", "SPEED 50", UDim2.new(0, 10, 0, 40), color50)
+local btn30 = createBtn("Btn30", "SPEED 30", UDim2.new(0, 10, 0, 85), color30)
+
+-- --- LOGIQUE DE COMMUTATION ---
+
+local function resetButtonVisuals()
+    btn50.BackgroundColor3 = color50
+    btn50.Text = "SPEED 50"
+    btn30.BackgroundColor3 = color30
+    btn30.Text = "SPEED 30"
+end
+
+btn50.MouseButton1Click:Connect(function()
+    if currentSpeed == 50 then
+        currentSpeed = 0
+        resetButtonVisuals()
+    else
+        currentSpeed = 50
+        resetButtonVisuals() -- Reset l'autre bouton d'abord
+        btn50.BackgroundColor3 = colorActive
+        btn50.Text = "ACTIF (50)"
+    end
+end)
+
+btn30.MouseButton1Click:Connect(function()
+    if currentSpeed == 30 then
+        currentSpeed = 0
+        resetButtonVisuals()
+    else
+        currentSpeed = 30
+        resetButtonVisuals() -- Reset l'autre bouton d'abord
+        btn30.BackgroundColor3 = colorActive
+        btn30.Text = "ACTIF (30)"
+    end
+end)
+
+-- --- BOUCLE PHYSIQUE ---
+
+runService.Heartbeat:Connect(function()
+    local char = player.Character
+    if char and char:FindFirstChild("HumanoidRootPart") and currentSpeed > 0 then
+        local hum = char.Humanoid
+        local root = char.HumanoidRootPart
+        
+        if hum.MoveDirection.Magnitude > 0 then
+            -- Application de la vitesse choisie
+            root.Velocity = Vector3.new(hum.MoveDirection.X * currentSpeed, root.Velocity.Y, hum.MoveDirection.Z * currentSpeed)
+        else
+            -- Freinage amorti
+            root.Velocity = Vector3.new(root.Velocity.X * 0.7, root.Velocity.Y, root.Velocity.Z * 0.7)
+        end
+    end
+end)
