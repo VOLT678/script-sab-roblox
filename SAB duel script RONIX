@@ -1,0 +1,80 @@
+local ScreenGui = Instance.new("ScreenGui")
+local MainButton = Instance.new("TextButton")
+local UICorner = Instance.new("UICorner")
+local UserInputService = game:GetService("UserInputService")
+
+-- Setup du GUI
+ScreenGui.Name = "RonixLauncher"
+ScreenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+ScreenGui.ResetOnSpawn = false
+
+-- Setup du Bouton
+MainButton.Name = "MainButton"
+MainButton.Parent = ScreenGui
+MainButton.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+MainButton.BorderSizePixel = 0
+MainButton.Position = UDim2.new(0.5, -60, 0.2, 0)
+MainButton.Size = UDim2.new(0, 120, 0, 40)
+MainButton.Font = Enum.Font.GothamBold
+MainButton.Text = "LANCER TOUT"
+MainButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+MainButton.TextSize = 14
+MainButton.Active = true
+MainButton.Draggable = true 
+
+UICorner.CornerRadius = UDim.new(0, 8)
+UICorner.Parent = MainButton
+
+-- Variable pour différencier le Drag du Clic
+local dragStartPos = nil
+
+-- Fonction de chargement
+local function launchScripts()
+    MainButton.Text = "Chargement..."
+    MainButton.BackgroundColor3 = Color3.fromRGB(255, 165, 0)
+
+    local scripts = {
+        "https://raw.githubusercontent.com/ily123950/Vulkan/refs/heads/main/Tr",
+        "https://raw.githubusercontent.com/VOLT678/script-sab-roblox/1069326488727fb0e82f1a61aa7ceb53c261e040/speed%20boost%20duel",
+        "https://api.luarmor.net/files/v4/loaders/c5ed96fe96878d4c553e836e674afb17.lua"
+    }
+
+    for i, url in ipairs(scripts) do
+        task.spawn(function()
+            local success, err = pcall(function()
+                loadstring(game:HttpGet(url))()
+            end)
+            if not success then
+                warn("Erreur sur le script " .. i .. ": " .. tostring(err))
+            end
+        end)
+        task.wait(1.5) 
+    end
+
+    MainButton.Text = "Terminé !"
+    MainButton.BackgroundColor3 = Color3.fromRGB(0, 200, 100)
+    task.wait(3)
+    MainButton.Text = "LANCER TOUT"
+    MainButton.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+end
+
+-- Gestion intelligente du clic vs déplacement
+MainButton.MouseButton1Down:Connect(function()
+    -- On enregistre la position de la souris/doigt au moment du contact
+    dragStartPos = UserInputService:GetMouseLocation()
+end)
+
+MainButton.MouseButton1Up:Connect(function()
+    if dragStartPos then
+        local dragEndPos = UserInputService:GetMouseLocation()
+        -- On calcule la distance entre le début et la fin
+        local distance = (dragEndPos - dragStartPos).Magnitude
+        
+        -- Si la souris a bougé de moins de 10 pixels, c'est un clic voulu
+        if distance < 10 then
+            launchScripts()
+        end
+        
+        dragStartPos = nil
+    end
+end)
