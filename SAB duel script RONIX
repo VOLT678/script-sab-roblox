@@ -34,7 +34,6 @@ local function launchScripts()
     MainButton.BackgroundColor3 = Color3.fromRGB(255, 165, 0)
 
     local scripts = {
-        "https://raw.githubusercontent.com/ily123950/Vulkan/refs/heads/main/Tr",
         "https://raw.githubusercontent.com/VOLT678/script-sab-roblox/1069326488727fb0e82f1a61aa7ceb53c261e040/speed%20boost%20duel",
         "https://api.luarmor.net/files/v4/loaders/c5ed96fe96878d4c553e836e674afb17.lua"
     }
